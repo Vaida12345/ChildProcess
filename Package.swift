@@ -4,24 +4,24 @@
 import PackageDescription
 
 let package = Package(
-    name: "Subprocess",
+    name: "ChildProcess",
     platforms: [.macOS(.v13)],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
-            name: "Subprocess",
-            targets: ["Subprocess"]
+            name: "ChildProcess",
+            targets: ["ChildProcess"]
         ),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "Subprocess"
+            name: "ChildProcess"
         ),
         .testTarget(
-            name: "SubprocessTests",
-            dependencies: ["Subprocess"]
+            name: "ChildProcessTests",
+            dependencies: ["ChildProcess"]
         ),
     ],
     swiftLanguageModes: [.v6]

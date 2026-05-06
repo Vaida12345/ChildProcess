@@ -1,6 +1,6 @@
 //
-//  Subprocess.swift
-//  Subprocess
+//  ChildProcess.swift
+//  ChildProcess
 //
 //  Created by Vaida on 2026-05-06.
 //
@@ -10,9 +10,9 @@ import Foundation
 import System
 
 
-public final class Subprocess: Sendable {
+public final class ChildProcess: Sendable {
     
-    /// The object that represents a subprocess of the current process.
+    /// The object that represents a ChildProcess of the current process.
     private let task: Process
     
     /// The one-way communications channel between related processes.
@@ -49,7 +49,16 @@ public final class Subprocess: Sendable {
     
     /// Requests the managed process to terminate if it is currently running.
     public func terminate() {
-        task.terminate()
+        self.task.terminate()
+        
+        try? self.standardInput.fileHandleForReading.close()
+        try? self.standardInput.fileHandleForWriting.close()
+        
+        try? self.standardOutput.fileHandleForReading.close()
+        try? self.standardOutput.fileHandleForWriting.close()
+        
+        try? self.standardError.fileHandleForReading.close()
+        try? self.standardError.fileHandleForWriting.close()
     }
     
     
@@ -68,24 +77,24 @@ public final class Subprocess: Sendable {
     }
     
     deinit {
-        self.task.terminate()
+        self.terminate()
     }
     
     
     /// Spawn a child process and returns immediately.
-    public static func makeSubprocess(
+    public static func makeProcess(
         _ path: FilePath,
         arguments: [String] = [],
         workingDirectory: FilePath? = nil,
         environment: [String : String]? = nil
-    ) throws -> Subprocess {
+    ) throws -> ChildProcess {
         let task = Process()
         task.executableURL = URL(filePath: path)
         task.arguments = arguments
         task.currentDirectoryURL = workingDirectory.flatMap({ URL(filePath: $0) })
         task.environment = environment
         
-        return try Subprocess(task: task)
+        return try ChildProcess(task: task)
     }
     
     /// Run, wait for exit, and collect stderr and stdout as `String`.
@@ -95,15 +104,15 @@ public final class Subprocess: Sendable {
         workingDirectory: FilePath? = nil,
         environment: [String : String]? = nil
     ) async throws -> (stdout: String?, stderr: String?) {
-        let subprocess = try Subprocess.makeSubprocess(
+        let ChildProcess = try ChildProcess.makeProcess(
             path,
             arguments: arguments,
             workingDirectory: workingDirectory,
             environment: environment
         )
-        subprocess.task.waitUntilExit()
-        guard subprocess.task.terminationStatus == 0 else {
-            throw SubprocessError(terminationStatus: subprocess.task.terminationStatus)
+        ChildProcess.task.waitUntilExit()
+        guard ChildProcess.task.terminationStatus == 0 else {
+            throw ChildProcessError(terminationStatus: ChildProcess.task.terminationStatus)
         }
         
         func read(from pipe: Pipe) -> String? {
@@ -111,10 +120,10 @@ public final class Subprocess: Sendable {
             return String(data: data, encoding: .utf8)
         }
         
-        return (read(from: subprocess.standardOutput), read(from: subprocess.standardError))
+        return (read(from: ChildProcess.standardOutput), read(from: ChildProcess.standardError))
     }
     
-    public struct SubprocessError: Error {
+    public struct ChildProcessError: Error {
         public let terminationStatus: Int32
     }
     

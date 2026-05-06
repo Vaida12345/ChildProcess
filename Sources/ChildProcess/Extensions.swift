@@ -1,6 +1,6 @@
 //
 //  Extensions.swift
-//  Subprocess
+//  ChildProcess
 //
 //  Created by Vaida on 2026-05-06.
 //
