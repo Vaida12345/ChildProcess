@@ -49,6 +49,7 @@ public final class ChildProcess: Sendable {
     
     /// Requests the managed process to terminate if it is currently running.
     public func terminate() {
+        guard task.isRunning else { return }
         self.task.terminate()
         
         try? self.standardInput.fileHandleForReading.close()
@@ -83,14 +84,20 @@ public final class ChildProcess: Sendable {
     
     /// Spawn a child process and returns immediately.
     public static func makeProcess(
-        _ path: FilePath,
+        _ origin: Origin,
         arguments: [String] = [],
         workingDirectory: FilePath? = nil,
         environment: [String : String]? = nil
     ) throws -> ChildProcess {
         let task = Process()
-        task.executableURL = URL(filePath: path)
-        task.arguments = arguments
+        switch origin {
+        case .name(let string):
+            task.executableURL = URL(filePath: "/bin/zsh")
+            task.arguments = ["-c", string + " " + arguments.joined(separator: " ")]
+        case .path(let filePath):
+            task.executableURL = URL(filePath: filePath)
+            task.arguments = arguments
+        }
         task.currentDirectoryURL = workingDirectory.flatMap({ URL(filePath: $0) })
         task.environment = environment
         
@@ -99,13 +106,13 @@ public final class ChildProcess: Sendable {
     
     /// Run, wait for exit, and collect stderr and stdout as `String`.
     public static func run(
-        _ path: FilePath,
+        _ origin: Origin,
         arguments: [String] = [],
         workingDirectory: FilePath? = nil,
         environment: [String : String]? = nil
     ) async throws -> (stdout: String?, stderr: String?) {
         let ChildProcess = try ChildProcess.makeProcess(
-            path,
+            origin,
             arguments: arguments,
             workingDirectory: workingDirectory,
             environment: environment
@@ -125,6 +132,11 @@ public final class ChildProcess: Sendable {
     
     public struct ChildProcessError: Error {
         public let terminationStatus: Int32
+    }
+    
+    public enum Origin {
+        case name(String)
+        case path(FilePath)
     }
     
 }
