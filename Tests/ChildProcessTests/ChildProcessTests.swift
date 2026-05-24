@@ -35,10 +35,12 @@ struct ChildProcessTests {
         let int = try await AppleScript.run(returning: .int, source: "return 42")
         let bool = try await AppleScript.run(returning: .bool, source: "return true")
         let double = try await AppleScript.run(returning: .double, source: "return 2.5")
+        let string = try await AppleScript.run(source: #"return "1234""#)
         
         #expect(int == 42)
         #expect(bool == true)
         #expect(double == 2.5)
+        #expect(string == "1234")
     }
     
     @Test func appleScriptListReturnTypesFromScript() async throws {

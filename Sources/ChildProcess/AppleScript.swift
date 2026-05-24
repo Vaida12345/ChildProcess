@@ -36,7 +36,7 @@ public enum AppleScript {
     /// - Throws: An ``ExecutionError`` when the source is invalid, execution fails, or the result cannot be converted.
     @AppleScriptActor
     public static func run<T>(
-        returning: ReturnType<T>,
+        returning: ReturnType<T> = .string,
         source: String
     ) async throws(ExecutionError) -> T {
         guard let appleScript = NSAppleScript(source: source) else { throw ExecutionError.invalidScript }
@@ -155,6 +155,18 @@ extension AppleScript.ReturnType where Value == URL {
     
 }
 
+extension AppleScript.ReturnType where Value == String {
+    
+    /// Reads an AppleScript result as a utf8 `String`.
+    public static let string = AppleScript.ReturnType<String> { (descriptor) throws(AppleScript.ExecutionError) -> String in
+        guard let string = descriptor.stringValue else {
+            throw .noValue
+        }
+        return string
+    }
+    
+}
+
 // MARK: - Lists
 
 extension AppleScript.ReturnType where Value == Array<Int> {
@@ -216,6 +228,17 @@ extension AppleScript.ReturnType where Value == Array<URL> {
     /// Reads an AppleScript list of file results as `[URL]`.
     public static func list(of type: AppleScript.ReturnType<URL>) -> AppleScript.ReturnType<Array<URL>> {
         AppleScript.ReturnType<Array<URL>> { (descriptor) throws(AppleScript.ExecutionError) -> Array<URL> in
+            try AppleScript._getReturnTypeList(of: type, descriptor: descriptor)
+        }
+    }
+    
+}
+
+
+extension AppleScript.ReturnType where Value == Array<String> {
+    
+    public static func list(of type: AppleScript.ReturnType<String>) -> AppleScript.ReturnType<Array<String>> {
+        AppleScript.ReturnType<Array<String>> { (descriptor) throws(AppleScript.ExecutionError) -> Array<String> in
             try AppleScript._getReturnTypeList(of: type, descriptor: descriptor)
         }
     }
