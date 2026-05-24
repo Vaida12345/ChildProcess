@@ -30,7 +30,9 @@ public enum AppleScript {
     /// - Parameters:
     ///   - returning: The return type adapter used to read the Apple event descriptor.
     ///   - source: The AppleScript source to execute.
+    ///
     /// - Returns: The value extracted from the script result.
+    /// 
     /// - Throws: An ``ExecutionError`` when the source is invalid, execution fails, or the result cannot be converted.
     @AppleScriptActor
     public static func run<T>(
@@ -158,17 +160,20 @@ extension AppleScript.ReturnType where Value == URL {
 extension AppleScript.ReturnType where Value == Array<Int> {
     
     /// Reads an AppleScript list of integers as `[Int]`.
-    public static let int = AppleScript.ReturnType<Array<Int>> { (descriptor) throws(AppleScript.ExecutionError) -> Array<Int> in
-        try AppleScript._getReturnTypeList(of: .int, descriptor: descriptor)
+    public static func list(of type: AppleScript.ReturnType<Int>) -> AppleScript.ReturnType<Array<Int>> {
+        AppleScript.ReturnType<Array<Int>> { (descriptor) throws(AppleScript.ExecutionError) -> Array<Int> in
+            try AppleScript._getReturnTypeList(of: type, descriptor: descriptor)
+        }
     }
-    
 }
 
 extension AppleScript.ReturnType where Value == Array<Data> {
     
     /// Reads an AppleScript list of descriptors as `[Data]`.
-    public static let data = AppleScript.ReturnType<Array<Data>> { (descriptor) throws(AppleScript.ExecutionError) -> Array<Data> in
-        try AppleScript._getReturnTypeList(of: .data, descriptor: descriptor)
+    public static func list(of type: AppleScript.ReturnType<Data>) -> AppleScript.ReturnType<Array<Data>> {
+        AppleScript.ReturnType<Array<Data>> { (descriptor) throws(AppleScript.ExecutionError) -> Array<Data> in
+            try AppleScript._getReturnTypeList(of: type, descriptor: descriptor)
+        }
     }
     
 }
@@ -176,8 +181,10 @@ extension AppleScript.ReturnType where Value == Array<Data> {
 extension AppleScript.ReturnType where Value == Array<Bool> {
     
     /// Reads an AppleScript list of booleans as `[Bool]`.
-    public static let bool = AppleScript.ReturnType<Array<Bool>> { (descriptor) throws(AppleScript.ExecutionError) -> Array<Bool> in
-        try AppleScript._getReturnTypeList(of: .bool, descriptor: descriptor)
+    public static func list(of type: AppleScript.ReturnType<Bool>) -> AppleScript.ReturnType<Array<Bool>> {
+        AppleScript.ReturnType<Array<Bool>> { (descriptor) throws(AppleScript.ExecutionError) -> Array<Bool> in
+            try AppleScript._getReturnTypeList(of: type, descriptor: descriptor)
+        }
     }
     
 }
@@ -185,8 +192,10 @@ extension AppleScript.ReturnType where Value == Array<Bool> {
 extension AppleScript.ReturnType where Value == Array<Double> {
     
     /// Reads an AppleScript list of real numbers as `[Double]`.
-    public static let double = AppleScript.ReturnType<Array<Double>> { (descriptor) throws(AppleScript.ExecutionError) -> Array<Double> in
-        try AppleScript._getReturnTypeList(of: .double, descriptor: descriptor)
+    public static func list(of type: AppleScript.ReturnType<Double>) -> AppleScript.ReturnType<Array<Double>> {
+        AppleScript.ReturnType<Array<Double>> { (descriptor) throws(AppleScript.ExecutionError) -> Array<Double> in
+            try AppleScript._getReturnTypeList(of: type, descriptor: descriptor)
+        }
     }
     
 }
@@ -194,8 +203,10 @@ extension AppleScript.ReturnType where Value == Array<Double> {
 extension AppleScript.ReturnType where Value == Array<Date> {
     
     /// Reads an AppleScript list of dates as `[Date]`.
-    public static let date = AppleScript.ReturnType<Array<Date>> { (descriptor) throws(AppleScript.ExecutionError) -> Array<Date> in
-        try AppleScript._getReturnTypeList(of: .date, descriptor: descriptor)
+    public static func list(of type: AppleScript.ReturnType<Date>) -> AppleScript.ReturnType<Array<Date>> {
+        AppleScript.ReturnType<Array<Date>> { (descriptor) throws(AppleScript.ExecutionError) -> Array<Date> in
+            try AppleScript._getReturnTypeList(of: type, descriptor: descriptor)
+        }
     }
     
 }
@@ -203,8 +214,10 @@ extension AppleScript.ReturnType where Value == Array<Date> {
 extension AppleScript.ReturnType where Value == Array<URL> {
     
     /// Reads an AppleScript list of file results as `[URL]`.
-    public static let fileURL = AppleScript.ReturnType<Array<URL>> { (descriptor) throws(AppleScript.ExecutionError) -> Array<URL> in
-        try AppleScript._getReturnTypeList(of: .fileURL, descriptor: descriptor)
+    public static func list(of type: AppleScript.ReturnType<URL>) -> AppleScript.ReturnType<Array<URL>> {
+        AppleScript.ReturnType<Array<URL>> { (descriptor) throws(AppleScript.ExecutionError) -> Array<URL> in
+            try AppleScript._getReturnTypeList(of: type, descriptor: descriptor)
+        }
     }
     
 }
