@@ -66,19 +66,20 @@ public final class ChildProcess: Sendable {
         self.task.standardError = standardError
         
         try task.run()
+        
+        try? self.standardInput.fileHandleForReading.close()
+        try? self.standardOutput.fileHandleForWriting.close()
+        try? self.standardError.fileHandleForWriting.close()
     }
     
     deinit {
         self.terminate()
         
-        try? self.standardInput.fileHandleForReading.close()
         try? self.standardInput.fileHandleForWriting.close()
         
         try? self.standardOutput.fileHandleForReading.close()
-        try? self.standardOutput.fileHandleForWriting.close()
         
         try? self.standardError.fileHandleForReading.close()
-        try? self.standardError.fileHandleForWriting.close()
     }
     
     
