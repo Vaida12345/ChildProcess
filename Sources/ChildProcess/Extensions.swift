@@ -13,8 +13,7 @@ import System
 extension FileHandle {
     
     public func write(_ string: some StringProtocol, terminator: String = "\n") throws {
-        guard let data = string.data(using: .utf8), let terminator = terminator.data(using: .utf8) else { return }
-        try self.write(contentsOf: data + terminator)
+        try self.write(contentsOf: Data(string.utf8) + Data(terminator.utf8))
     }
     
 }

@@ -9,19 +9,6 @@
 import Foundation
 
 
-/// An actor use exclusively for AppleScript execution, to ensure apple script is executed in serial.
-///
-/// - Experiment: Running apple script concurrently will fail.
-@globalActor
-public actor AppleScriptActor {
-    
-    /// The shared instance.
-    ///
-    /// This is the implementation detail for `@globalActor`.
-    public static let shared = AppleScriptActor()
-    
-}
-
 /// A namespace for compiling and executing AppleScript source from Swift.
 public enum AppleScript {
     
@@ -34,7 +21,7 @@ public enum AppleScript {
     /// - Returns: The value extracted from the script result.
     /// 
     /// - Throws: An ``ExecutionError`` when the source is invalid, execution fails, or the result cannot be converted.
-    @AppleScriptActor
+    @MainActor
     public static func run<T>(
         returning: ReturnType<T> = .string,
         source: String
@@ -44,18 +31,37 @@ public enum AppleScript {
         var error: NSDictionary?
         let result = appleScript.executeAndReturnError(&error)
         
-        if let error = error { throw .executionFailed(error) }
+        if let error = error { throw .executionFailed(ScriptErrorInfo(error)) }
         
         return try returning.getValue(result)
     }
     
+    /// Error information extracted from an AppleScript execution failure.
+    public struct ScriptErrorInfo: Sendable {
+        /// The error message from AppleScript.
+        public let message: String?
+        /// The error number from AppleScript.
+        public let number: Int?
+        /// A brief error message from AppleScript.
+        public let briefMessage: String?
+        /// The application name where the error occurred.
+        public let appName: String?
+
+        init(_ dictionary: NSDictionary) {
+            message = dictionary[NSAppleScript.errorMessage] as? String
+            number = dictionary[NSAppleScript.errorNumber] as? Int
+            briefMessage = dictionary[NSAppleScript.errorBriefMessage] as? String
+            appName = dictionary[NSAppleScript.errorAppName] as? String
+        }
+    }
+
     /// An error that can occur while compiling, executing, or reading the result of an AppleScript.
-    public enum ExecutionError: Error, @unchecked Sendable {
+    public enum ExecutionError: Error, Sendable {
         /// The AppleScript source could not be compiled.
         case invalidScript
-        
+
         /// AppleScript execution failed and returned an error dictionary.
-        case executionFailed(NSDictionary)
+        case executionFailed(ScriptErrorInfo)
         
         /// The returned descriptor did not contain a value for the requested type.
         case noValue
@@ -236,7 +242,8 @@ extension AppleScript.ReturnType where Value == Array<URL> {
 
 
 extension AppleScript.ReturnType where Value == Array<String> {
-    
+
+    /// Reads an AppleScript list of strings as `[String]`.
     public static func list(of type: AppleScript.ReturnType<String>) -> AppleScript.ReturnType<Array<String>> {
         AppleScript.ReturnType<Array<String>> { (descriptor) throws(AppleScript.ExecutionError) -> Array<String> in
             try AppleScript._getReturnTypeList(of: type, descriptor: descriptor)

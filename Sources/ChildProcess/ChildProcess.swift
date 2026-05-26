@@ -112,27 +112,40 @@ public final class ChildProcess: Sendable {
         workingDirectory: FilePath? = nil,
         environment: [String : String]? = nil
     ) async throws -> (stdout: String?, stderr: String?) {
-        let ChildProcess = try ChildProcess.makeProcess(
+        let childProcess = try ChildProcess.makeProcess(
             origin,
             arguments: arguments,
             workingDirectory: workingDirectory,
             environment: environment
         )
-        ChildProcess.task.waitUntilExit()
-        guard ChildProcess.task.terminationStatus == 0 else {
-            throw ChildProcessError(terminationStatus: ChildProcess.task.terminationStatus)
+
+        return try await withCheckedThrowingContinuation { continuation in
+            childProcess.task.terminationHandler = { task in
+                guard task.terminationStatus == 0 else {
+                    continuation.resume(
+                        throwing: ChildProcessError(terminationStatus: task.terminationStatus)
+                    )
+                    return
+                }
+
+                func read(from fileHandle: FileHandle) -> String? {
+                    guard let data = try? fileHandle.readToEnd() else { return nil }
+                    return String(data: data, encoding: .utf8)
+                }
+
+                let stdoutStr = read(from: childProcess.stdout)
+                let stderrStr = read(from: childProcess.stderr)
+                continuation.resume(returning: (stdoutStr, stderrStr))
+            }
         }
-        
-        func read(from pipe: Pipe) -> String? {
-            guard let data = try? pipe.fileHandleForReading.readToEnd() else { return nil }
-            return String(data: data, encoding: .utf8)
-        }
-        
-        return (read(from: ChildProcess.standardOutput), read(from: ChildProcess.standardError))
     }
     
-    public struct ChildProcessError: Error {
+    public struct ChildProcessError: Error, CustomStringConvertible, Equatable {
         public let terminationStatus: Int32
+
+        public var description: String {
+            "Process exited with status \(terminationStatus)"
+        }
     }
     
     public enum Origin {

@@ -1,4 +1,5 @@
 import Testing
+import System
 import Foundation
 @testable import ChildProcess
 
@@ -6,12 +7,13 @@ import Foundation
 struct ChildProcessTests {
     
     @Test func directReturn() async throws {
+        let testDir = FilePath(URL(fileURLWithPath: #filePath).deletingLastPathComponent().path)
         let (stdout, stderr) = try await ChildProcess.run(
             .path("/bin/ls"),
-            workingDirectory: "/Users/vaida/Library/Mobile Documents/com~apple~CloudDocs/DataBase/Projects/Packages/ChildProcess/Tests"
+            workingDirectory: testDir
         )
 
-        #expect(stdout == "ChildProcessTests\n")
+        #expect(stdout == "ChildProcessTests.swift\n")
         #expect(stderr == nil)
     }
     
@@ -23,10 +25,10 @@ struct ChildProcessTests {
     }
     
     @Test func inputOutput() async throws {
-        let ChildProcess = try ChildProcess.makeProcess(.path("/opt/homebrew/bin/calc"))
-        
-        var lines = ChildProcess.stdout.bytes.lines.makeAsyncIterator()
-        try ChildProcess.stdin.write("1 + 1")
+        let childProcess = try ChildProcess.makeProcess(.path("/usr/bin/bc"))
+
+        var lines = childProcess.stdout.bytes.lines.makeAsyncIterator()
+        try childProcess.stdin.write("1 + 1")
         let next = try await lines.next()?.trimmingCharacters(in: .whitespaces)
         #expect(next == "2")
     }
