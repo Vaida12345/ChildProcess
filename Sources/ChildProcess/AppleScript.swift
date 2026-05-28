@@ -19,13 +19,14 @@ public enum AppleScript {
     ///   - source: The AppleScript source to execute.
     ///
     /// - Returns: The value extracted from the script result.
-    /// 
+    ///
+    /// - Warning: You must not call this method in parallel. However, this package cannot ensure that due to possible conflicts between old API and swift concurrency.
+    ///
     /// - Throws: An ``ExecutionError`` when the source is invalid, execution fails, or the result cannot be converted.
-    @MainActor
     public static func run<T>(
         returning: ReturnType<T> = .string,
         source: String
-    ) async throws(ExecutionError) -> T {
+    ) throws(ExecutionError) -> T {
         guard let appleScript = NSAppleScript(source: source) else { throw ExecutionError.invalidScript }
         
         var error: NSDictionary?
