@@ -20,21 +20,32 @@ public enum AppleScript {
     ///
     /// - Returns: The value extracted from the script result.
     ///
-    /// - Warning: You must not call this method in parallel. However, this package cannot ensure that due to possible conflicts between old API and swift concurrency.
+    /// - Note: The script is ran on `MainActor` to prevent bugs.
+    ///
+    /// > Tip:
+    /// > Set `NSAppleEventsUsageDescription` in Info.plist.
+    /// >
+    /// > Set `com.apple.security.automation.apple-events` in sandbox.
     ///
     /// - Throws: An ``ExecutionError`` when the source is invalid, execution fails, or the result cannot be converted.
     public static func run<T>(
         returning: ReturnType<T> = .string,
         source: String
-    ) throws(ExecutionError) -> T {
+    ) async throws(ExecutionError) -> T {
         guard let appleScript = NSAppleScript(source: source) else { throw ExecutionError.invalidScript }
         
-        var error: NSDictionary?
-        let result = appleScript.executeAndReturnError(&error)
-        
-        if let error = error { throw .executionFailed(ScriptErrorInfo(error)) }
-        
-        return try returning.getValue(result)
+        do {
+            return try await MainActor.run {
+                var error: NSDictionary?
+                let result = appleScript.executeAndReturnError(&error)
+                if let error = error { throw ExecutionError.executionFailed(ScriptErrorInfo(error)) }
+                return try returning.getValue(result)
+            }
+        } catch let error as ExecutionError {
+            throw error
+        } catch {
+            fatalError()
+        }
     }
     
     /// Error information extracted from an AppleScript execution failure.
@@ -58,7 +69,7 @@ public enum AppleScript {
 
     /// An error that can occur while compiling, executing, or reading the result of an AppleScript.
     public enum ExecutionError: Error, Sendable {
-        /// The AppleScript source could not be compiled.
+        /// The AppleScript source is invalid.
         case invalidScript
 
         /// AppleScript execution failed and returned an error dictionary.
@@ -76,7 +87,7 @@ public enum AppleScript {
 extension AppleScript {
     
     /// A converter that reads an Apple event descriptor as a specific Swift value.
-    public struct ReturnType<Value>: Sendable {
+    public struct ReturnType<Value: Sendable>: Sendable {
         let getValue: @Sendable (_ descriptor: NSAppleEventDescriptor) throws(ExecutionError) -> Value
         
         init(getValue: @Sendable @escaping (_: NSAppleEventDescriptor) throws(ExecutionError) -> Value) {

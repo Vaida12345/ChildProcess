@@ -3,7 +3,7 @@ import System
 import Foundation
 @testable import ChildProcess
 
-@Suite(.serialized)
+@Suite
 struct ChildProcessTests {
     
     @Test func directReturn() async throws {
@@ -34,10 +34,10 @@ struct ChildProcessTests {
     }
     
     @Test func appleScriptScalarReturnTypes() async throws {
-        let int = try AppleScript.run(returning: .int, source: "return 42")
-        let bool = try AppleScript.run(returning: .bool, source: "return true")
-        let double = try AppleScript.run(returning: .double, source: "return 2.5")
-        let string = try AppleScript.run(source: #"return "1234""#)
+        let int = try await AppleScript.run(returning: .int, source: "return 42")
+        let bool = try await AppleScript.run(returning: .bool, source: "return true")
+        let double = try await AppleScript.run(returning: .double, source: "return 2.5")
+        let string = try await AppleScript.run(source: #"return "1234""#)
         
         #expect(int == 42)
         #expect(bool == true)
@@ -46,9 +46,9 @@ struct ChildProcessTests {
     }
     
     @Test func appleScriptListReturnTypesFromScript() async throws {
-        let ints = try AppleScript.run(returning: .list(of: .int), source: "return {1, 2, 3}")
-        let bools = try AppleScript.run(returning: .list(of: .bool), source: "return {true, false, true}")
-        let doubles = try AppleScript.run(returning: .list(of: .double), source: "return {1.25, 2.5, 5.0}")
+        let ints = try await AppleScript.run(returning: .list(of: .int), source: "return {1, 2, 3}")
+        let bools = try await AppleScript.run(returning: .list(of: .bool), source: "return {true, false, true}")
+        let doubles = try await AppleScript.run(returning: .list(of: .double), source: "return {1.25, 2.5, 5.0}")
         
         #expect(ints == [1, 2, 3])
         #expect(bools == [true, false, true])
