@@ -185,6 +185,15 @@ extension AppleScript.ReturnType where Value == String {
     
 }
 
+extension AppleScript.ReturnType where Value == Void {
+    
+    /// Returns
+    public static let void = AppleScript.ReturnType<Void> { (descriptor) throws(AppleScript.ExecutionError) -> Void in
+        return
+    }
+    
+}
+
 // MARK: - Lists
 
 extension AppleScript.ReturnType where Value == Array<Int> {
